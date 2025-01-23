@@ -14,18 +14,18 @@ view, and delete images.
 4. User Profile: View user details along with their uploaded images.
 
 ### Prerequisites ###
-JDK 17 or higher
-SpringBoot 3.x.x
-Maven
-H2 database for storing user details (username, password)
-Imgur account for image management
-SLF4J for logging purposes
-Spring Security for authentication
-Imgur API client credentials (client ID, client secret, redirect URI)
+1. JDK 17 or higher
+2. SpringBoot 3.x.x
+3. Maven
+4. H2 database for storing user details (username, password)
+5. Imgur account for image management
+6. SLF4J for logging purposes
+7. Spring Security for authentication
+8. Imgur API client credentials (client ID, client secret, redirect URI)
 
 ### Workflow ###
 1. User Registration:
-Users provide their first name, last name, username, and password via a REST API.
+Users provide their first name, last name, username, and password via a REST API.     
 The system checks if the username already exists. If not, the user is successfully registered.
 
 2. Imgur OAuth Authorization:
