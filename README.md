@@ -1,4 +1,4 @@
-### UserImageApp ###
+## UserImageApp ##
 
 This is a Spring Boot application that allows users to register with their first name, last name, username, and password. Once registered, users are authorized with Imgur’s OAuth,
 and an access token is generated, which they can use to make authenticated API calls. The app integrates with Imgur’s API to manage images, providing users with the ability to upload,
