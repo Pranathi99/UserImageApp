@@ -23,7 +23,7 @@ public class SecurityConfig {
         return http
             .csrf().disable()  // Disables CSRF (important for APIs)
             .authorizeHttpRequests()
-                .requestMatchers("/api/register","/api/**")
+                .requestMatchers("/api/register")
                 .permitAll()  // Allow these endpoints without authentication
                 .anyRequest().authenticated()  // All other requests require authentication
             .and()
