@@ -2,40 +2,22 @@ package com.myapp.userimageapp.controllerTest;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.multipart.MultipartFile;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
-import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-
 
 import com.myapp.userimageapp.controller.User;
 import com.myapp.userimageapp.model.UserModel;
@@ -43,12 +25,8 @@ import com.myapp.userimageapp.service.ImageService;
 import com.myapp.userimageapp.service.UserService;
 
 @SpringBootTest
-@AutoConfigureMockMvc
 @TestPropertySource(properties = {"imgur.clientId=sampleClientId", "imgur.redirectUri=sampleRedirectUri"})
 public class UserTest {
-
-    @Autowired
-    private MockMvc mockMvc;
 
     @Value("${imgur.clientId}")
     private String clientId;
@@ -79,15 +57,18 @@ public class UserTest {
     // Test Image Upload API
     @Test
     public void testUploadImage() throws Exception {
-        String accessToken = "accessToken";
+        String authHeader = "Bearer accessToken";
+        String accessToken = "accessToken"; // Extracted from the auth header
         String imageUrl = "https://picsum.photos/id/237";
-        MultipartFile file = mock(MultipartFile.class);  // You can mock the file as needed
-        String expectedResponse="img_url";
+        MultipartFile file = mock(MultipartFile.class);  // Mock MultipartFile
+        String expectedResponse = imageUrl;
+
+        Map<String,Object>responseEntity=Map.of("link", imageUrl);
 
         when(imageService.uploadImage(eq(file), eq(accessToken)))
-                .thenReturn(Map.of("link", imageUrl));
+                .thenReturn(responseEntity);
 
-        String actualResponse=userController.uploadImage(file,accessToken).getBody();
+        String actualResponse=userController.uploadImage(file,authHeader).getBody();
         assertEquals(actualResponse, expectedResponse);
     }
 
@@ -96,9 +77,13 @@ public class UserTest {
     public void testGetImage() throws Exception {
         String imageId = "image123";
         String accessToken = "accessToken";
+        String authHeader = "Bearer accessToken";
+
         Map<String, Object> expectedResponse = Map.of("id", imageId, "url", "https://picsum.photos/id/237");
 
-        Map<String,Object> actualResponse=userController.getImage(imageId,accessToken).getBody();
+        when(imageService.getImage(imageId, accessToken)).thenReturn(expectedResponse);
+
+        Map<String,Object> actualResponse=userController.getImage(imageId,authHeader).getBody();
         assertEquals(actualResponse, expectedResponse);
     }
 
@@ -107,21 +92,52 @@ public class UserTest {
     public void testDeleteImage() throws Exception {
         String deleteHash = "delete123";
         String accessToken = "accessToken";
-        String expectedResponse="Image deleted successfully!";
+        String authHeader = "Bearer accessToken";
+        String expectedResponse="Image deleted successfully";
 
-        String actualResponse=userController.deleteImage(deleteHash,accessToken).getBody();
+        when(imageService.deleteImage(deleteHash, accessToken)).thenReturn(true);
+
+        String actualResponse=userController.deleteImage(deleteHash,authHeader).getBody();
         assertEquals(actualResponse, expectedResponse);
+    }
+
+    @Test
+    public void testGetAllImages() throws Exception {
+        String authHeader = "Bearer accessToken";
+        String accessToken="accessToken";
+        Map<String, Object> image1 = new HashMap<>();
+        image1.put("id", "image123");
+        image1.put("url", "https://example.com/image1.jpg");
+
+        Map<String, Object> image2 = new HashMap<>();
+        image2.put("id", "image234");
+        image2.put("url", "https://example.com/image2.jpg");
+
+        // Mock the response body to return a list of maps under the "data" key
+        List<Map<String, Object>> mockImageList = new ArrayList<>();
+        mockImageList.add(image1);
+        mockImageList.add(image2);
+
+        when(imageService.getUserImages(accessToken)).thenReturn(mockImageList);
+
+        List<Map<String, Object>> actualResponse=userController.getAllImages(authHeader).getBody();
+
+        assertEquals(mockImageList, actualResponse);
+        
     }
 
     // Test Get User Details API
     @Test
     public void testGetUserDetails() throws Exception {
         String username = "john_summers";
-        String accessToken = "accessToken";
-        UserModel user = new UserModel(username, "John", "Summers");
+        String authHeader = "Bearer accessToken";
+        UserModel user = new UserModel("John", "Summers",username);
 
-        UserModel actualResponse=userController.getUserDetails(username,accessToken).getBody();
+        when(userService.getUserInfo(username)).thenReturn(user);
+        UserModel actualResponse=userController.getUserDetails(username,authHeader).getBody();
 
         assertEquals(actualResponse, user);
     }
+
+
 }

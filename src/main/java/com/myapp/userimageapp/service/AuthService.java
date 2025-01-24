@@ -34,7 +34,19 @@ public class AuthService {
     // In-memory storage for user access tokens (use persistent storage in production)
     private final Map<String, String> userAccessTokens = new HashMap<>();
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    //private final RestTemplate restTemplate = new RestTemplate();
+
+    private final RestTemplate restTemplate;
+
+    // Constructor injection
+    public AuthService(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+
+    // Default constructor for scenarios where you don't want dependency injection
+    public AuthService() {
+        this.restTemplate = new RestTemplate(); // default RestTemplate if no injection
+    }
 
     // Exchange authorization code for an access token
     public String exchangeAuthCodeForAccessToken(String authorizationCode) {

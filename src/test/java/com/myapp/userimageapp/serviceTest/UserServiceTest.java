@@ -43,7 +43,7 @@ public class UserServiceTest {
     @InjectMocks
     private UserService userService;
 
-    @Mock
+    @InjectMocks
     private ImageService imageService;
 
     private BCryptPasswordEncoder passwordEncoder;

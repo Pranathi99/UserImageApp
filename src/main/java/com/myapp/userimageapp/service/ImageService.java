@@ -10,6 +10,8 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,7 +33,17 @@ public class ImageService {
     private static final String IMGUR_API_URL = "https://api.imgur.com/3/image";
     private static final String IMGUR_ACCOUNT_URL = "https://api.imgur.com/3/account/me/images";
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
+
+    public ImageService(RestTemplate restTemplate)
+    {
+        this.restTemplate=restTemplate;
+    }
+
+    public ImageService()
+    {
+        this.restTemplate= new RestTemplate();
+    }
 
     // Upload an image to Imgur using OAuth access token
     public Map<String, Object> uploadImage(MultipartFile imageFile, String accessToken) throws IOException {
@@ -127,6 +139,7 @@ public class ImageService {
 
         // Send DELETE request to Imgur API
         ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.DELETE, entity, Map.class);
+        //System.out.println(response);
 
         return response.getStatusCode() == HttpStatus.OK;
     }
@@ -148,14 +161,23 @@ public class ImageService {
             if (response.getStatusCode() == HttpStatus.OK) {
                 Map<String, Object> responseBody = response.getBody();
                 log.info("Retrieval success in image service..");
+                System.out.println(responseBody.get("data"));
                 return (List<Map<String, Object>>) responseBody.get("data");
             }
+            else 
+            {
+                // Log status code and response body for better debugging
+                log.error("Failed to retrieve images. Status code: " + response.getStatusCode());
+                log.error("Response body: " + response.getBody());
+                throw new RuntimeException("Error fetching images: " + response.getStatusCode());
+            }
+        }
+        catch (HttpClientErrorException | HttpServerErrorException ex) {
+            log.error("Http error occurred: " + ex.getStatusCode() + " - " + ex.getResponseBodyAsString());
+            throw new RuntimeException("HTTP error fetching user images", ex);
         } catch (Exception ex) {
-            log.error(ex.getMessage());
+            log.error("An unexpected error occurred: " + ex.getMessage(), ex);
             throw new RuntimeException("Error fetching user images", ex);
         }
-        log.error("Error fetching images in imaege service..");
-        throw new RuntimeException("Error fetching images");
     }
-
 }
